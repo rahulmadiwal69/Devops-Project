@@ -7,7 +7,7 @@ router.post("/link-issue", async (req, res) => {
     const { projectKey, summary, description, issueType, repoName } = req.body;
 
     try {
-        // Create Jira Issue
+        // ✅ Step 1: Create Jira Issue
         const jiraResponse = await axios.post(
             `${process.env.JIRA_URL}/rest/api/3/issue`,
             {
@@ -32,19 +32,23 @@ router.post("/link-issue", async (req, res) => {
         );
 
         const jiraIssueKey = jiraResponse.data.key;
+        console.log(`✅ Jira Issue Created: ${jiraIssueKey}`);
 
-        // Create GitHub Issue & Link to Jira
+        // ✅ Step 2: Create GitHub Issue
         const githubResponse = await axios.post(
             `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/issues`,
             { title: summary, body: `Jira Issue: ${jiraIssueKey}\n\n${description}` },
             { headers: { Authorization: `token ${process.env.GITHUB_TOKEN}` } }
         );
 
+        console.log(`✅ GitHub Issue Created: ${githubResponse.data.html_url}`);
+
         res.json({
             jiraIssueKey,
             githubIssueUrl: githubResponse.data.html_url
         });
     } catch (error) {
+        console.error("❌ Error linking Jira & GitHub Issues:", error.response?.data || error.message);
         res.status(500).json({ error: error.response?.data || error.message });
     }
 });

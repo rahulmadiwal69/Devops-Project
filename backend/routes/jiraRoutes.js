@@ -3,38 +3,28 @@ import axios from 'axios';
 
 const router = Router();
 
-router.post('/issue', async (req, res) => {
-    const { projectKey, summary, description, issueType } = req.body;
-
+// ✅ Fetch Jira issues
+router.get('/issues', async (req, res) => {
     try {
-        const response = await axios.post(
-            `${process.env.JIRA_URL}/rest/api/3/issue`,
-            {
-                fields: {
-                    project: { key: projectKey },
-                    summary,
-                    description: {
-                        type: "doc",
-                        version: 1,
-                        content: [{ type: "paragraph", content: [{ text: description, type: "text" }] }]
-                    },
-                    issuetype: { name: issueType }
-                }
-            },
+        const response = await axios.get(
+            `${process.env.JIRA_URL}/rest/api/3/search?jql=project=${process.env.JIRA_PROJECT_KEY}`,
             {
                 auth: {
                     username: process.env.JIRA_EMAIL,
                     password: process.env.JIRA_API_TOKEN
                 },
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Accept': 'application/json' }
             }
         );
 
-        res.json(response.data);
+        if (!response.data.issues) {
+            console.error("Jira API response missing 'issues':", response.data);
+            return res.status(500).json({ error: "Invalid Jira API response format" });
+        }
+
+        res.json(response.data.issues);
     } catch (error) {
+        console.error("Jira API error:", error.response?.data || error.message);
         res.status(500).json({ error: error.response?.data || error.message });
     }
 });

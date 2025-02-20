@@ -8,8 +8,7 @@ config();
 // ✅ Initialize Express app
 const app = express();
 app.use(json());
-app.use(cors());
-
+app.use(cors({ origin: 'http://localhost:3000' }));
 // ✅ Import route files AFTER initializing `app`
 import slackRoutes from "./routes/slackRoutes.js";
 import jiraRoutes from "./routes/jiraRoutes.js";

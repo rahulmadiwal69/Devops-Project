@@ -17,5 +17,25 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ Ensure default export
+// Fix: Ensure response always returns an array
+router.get('/messages', async (req, res) => {
+    try {
+        const response = await axios.get('https://slack.com/api/conversations.history', {
+            params: { channel: process.env.SLACK_CHANNEL_ID, limit: 10 },
+            headers: { Authorization: `Bearer ${process.env.SLACK_TOKEN}` }
+        });
+
+        console.log(response.data);  // Log the full response to check structure
+
+        if (response.data && Array.isArray(response.data.messages)) {
+            res.json({ messages: response.data.messages });
+        } else {
+            res.json({ messages: [] }); // Return empty array if no messages
+        }
+    } catch (error) {
+        console.error(error);  // Log error for debugging
+        res.status(500).json({ error: error.response?.data || error.message });
+    }
+});
+
 export default router;
